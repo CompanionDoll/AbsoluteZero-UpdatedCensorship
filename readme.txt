@@ -1,6 +1,8 @@
 ---Absolute Zero: Updated German Censorship---
 Source code of this addon: https://gamebanana.com/mods/712161
+De-facto a fork of original HLAZ repository: https://github.com/Cobalt-57/Half-Life-Absolute-Zero
 For changes related to censorship - look for //ComDoll comments.
+p.s: i am no professional programmer, feel free to complain about the low quality of this code. It works, and that's all what matters ;)
 
 ---HLS1 AZ Codebase---
 
