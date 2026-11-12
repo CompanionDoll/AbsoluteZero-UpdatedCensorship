@@ -1,0 +1,189 @@
+/***
+*
+*	Copyright (c) 1996-2002, Valve LLC. All rights reserved.
+*	
+*	This product contains software technology licensed from Id 
+*	Software, Inc. ("Id Technology").  Id Technology (c) 1996 Id Software, Inc. 
+*	All Rights Reserved.
+*
+*   This source code contains proprietary and confidential information of
+*   Valve LLC and its suppliers.  Access to this code is restricted to
+*   persons who have executed a written SDK license with Valve.  Any access,
+*   use or distribution of this code by or to any unlicensed person is illegal.
+*
+****/
+//=========================================================
+// Generic Monster - purely for scripted sequence work.
+//=========================================================
+#include "extdll.h"
+#include "util.h"
+#include "cbase.h"
+#include "basemonster.h"
+#include "schedule.h"
+
+//ComDoll -- she's germaning on my censorship until i EASY_CVAR_EXTERN_CLIENTSENDOFF_BROADCAST
+EASY_CVAR_EXTERN_CLIENTSENDOFF_BROADCAST(sv_germancensorship)
+
+// For holograms, make them not solid so the player can walk through them
+#define SF_GENERICMONSTER_NOTSOLID					4 
+
+//=========================================================
+// Monster's Anim Events Go Here
+//=========================================================
+
+class CGenericMonster : public CBaseMonster
+{
+public:
+	BOOL isOrganic(void);
+	void Spawn( void );
+	void Precache( void );
+	void SetYawSpeed( void );
+	int  Classify ( void );
+	void HandleAnimEvent( MonsterEvent_t *pEvent );
+	int ISoundMask ( void );
+};
+LINK_ENTITY_TO_CLASS( monster_generic, CGenericMonster );
+
+BOOL CGenericMonster::isOrganic(void)
+{	
+	//ComDoll -- this is reall-really stupid. If NPC is non-organic, then it cannot use RenderFX modes.
+	//I really can't be assed to find source of this issue, so i'll just make monster_generic organic but non-bleedable in censorship
+	 return TRUE;
+}
+
+//=========================================================
+// Classify - indicates this monster's place in the 
+// relationship table.
+//=========================================================
+int CGenericMonster::Classify ( void )
+{
+	return	CLASS_PLAYER_ALLY;
+}
+
+//=========================================================
+// SetYawSpeed - allows each sequence to have a different
+// turn rate associated with it.
+//=========================================================
+void CGenericMonster::SetYawSpeed ( void )
+{
+	int ys;
+
+	switch ( m_Activity )
+	{
+	case ACT_IDLE:
+	default:
+		ys = 90;
+	}
+
+	pev->yaw_speed = ys;
+}
+
+//=========================================================
+// HandleAnimEvent - catches the monster-specific messages
+// that occur when tagged animation frames are played.
+//=========================================================
+void CGenericMonster::HandleAnimEvent( MonsterEvent_t *pEvent )
+{
+	switch( pEvent->event )
+	{
+	case 0:
+	default:
+		CBaseMonster::HandleAnimEvent( pEvent );
+		break;
+	}
+}
+
+//=========================================================
+// ISoundMask - generic monster can't hear.
+//=========================================================
+int CGenericMonster::ISoundMask ( void )
+{
+	return	NULL;
+}
+
+//=========================================================
+// Spawn
+//=========================================================
+void CGenericMonster::Spawn()
+{
+	Precache();
+
+	//ComDoll -- making german censorship work on monster_generic.
+	if (EASY_CVAR_GET_CLIENTSENDOFF_BROADCAST(sv_germancensorship))
+	{
+		//ComDoll -- WELCOME TO IF-ELSE HELL
+		//ComDoll -- oh my god, it's case-sensetive... a1a2c in October version uses "Scientist.mdl" instead of "scientist.mdl". I believe this is the only case in that build?
+		if (FStrEq(STRING(pev->model), "models/scientist.mdl" ) || FStrEq(STRING(pev->model), "models/Scientist.mdl"))
+			SET_MODEL(ENT(pev), "models/g_scientist.mdl");
+		if (FStrEq(STRING(pev->model), "models/barney.mdl"))
+			SET_MODEL(ENT(pev), "models/g_barney.mdl");
+		if (FStrEq(STRING(pev->model), "models/hgrunt.mdl"))
+			SET_MODEL(ENT(pev), "models/g_hgrunt.mdl");
+		if (FStrEq(STRING(pev->model), "models/hassault.mdl"))
+			SET_MODEL(ENT(pev), "models/g_hassault.mdl");
+		if (FStrEq(STRING(pev->model), "models/zombie.mdl"))
+			SET_MODEL(ENT(pev), "models/g_zombie.mdl");
+		if (FStrEq(STRING(pev->model), "models/hassassin.mdl"))
+			SET_MODEL(ENT(pev), "models/g_hassassin.mdl");
+		if (FStrEq(STRING(pev->model), "models/gman.mdl"))
+			SET_MODEL(ENT(pev), "models/g_gman.mdl");
+		if (FStrEq(STRING(pev->model), "models/construction.mdl"))
+			SET_MODEL(ENT(pev), "models/g_construction.mdl");
+		if (FStrEq(STRING(pev->model), "models/player.mdl"))
+			SET_MODEL(ENT(pev), "models/g_player.mdl");
+		if (FStrEq(STRING(pev->model), "models/holo.mdl"))
+			SET_MODEL(ENT(pev), "models/g_holo.mdl");
+		//else SET_MODEL(ENT(pev), STRING(pev->model));
+	}
+	SET_MODEL(ENT(pev), STRING(pev->model));
+
+/*
+	if ( FStrEq( STRING(pev->model), "models/player.mdl" ) )
+		UTIL_SetSize(pev, VEC_HUMAN_HULL_MIN, VEC_HUMAN_HULL_MAX);
+	else
+		UTIL_SetSize(pev, VEC_HULL_MIN, VEC_HULL_MAX);
+*/
+
+	if ( FStrEq( STRING(pev->model), "models/player.mdl" ) || FStrEq( STRING(pev->model), "models/holo.mdl" ) || FStrEq(STRING(pev->model), "models/g_player.mdl") || FStrEq(STRING(pev->model), "models/g_holo.mdl"))
+		UTIL_SetSize(pev, VEC_HULL_MIN, VEC_HULL_MAX);
+	else
+		UTIL_SetSize(pev, VEC_HUMAN_HULL_MIN, VEC_HUMAN_HULL_MAX);
+
+	pev->solid			= SOLID_SLIDEBOX;
+	pev->movetype		= MOVETYPE_STEP;
+	//ComDoll -- German Censorship. I can't make it model-dependant apparently?
+	if (EASY_CVAR_GET_CLIENTSENDOFF_BROADCAST(sv_germancensorship)) {
+		m_bloodColor = DONT_BLEED;
+	}
+	else m_bloodColor = BLOOD_COLOR_RED;
+	pev->health			= 8;
+	m_flFieldOfView		= 0.5;// indicates the width of this monster's forward view cone ( as a dotproduct result )
+	m_MonsterState		= MONSTERSTATE_NONE;
+
+	MonsterInit();
+
+	if ( pev->spawnflags & SF_GENERICMONSTER_NOTSOLID )
+	{
+		pev->solid = SOLID_NOT;
+		pev->takedamage = DAMAGE_NO;
+	}
+}
+
+//=========================================================
+// Precache - precaches all resources this monster needs
+//=========================================================
+void CGenericMonster::Precache()
+{
+	PRECACHE_MODEL( (char *)STRING(pev->model));
+
+	//ComDoll -- german censorship. Gotta precache some stuff manually
+	if (EASY_CVAR_GET_CLIENTSENDOFF_BROADCAST(sv_germancensorship))
+	{
+		PRECACHE_MODEL("models/g_construction.mdl");
+		PRECACHE_MODEL("models/g_holo.mdl");
+	}
+}	
+
+//=========================================================
+// AI Schedules Specific to this monster
+//=========================================================
